@@ -1,0 +1,1 @@
+Train_Loss	Train Loss X	Train Loss U	Test Loss	Test Acc.	Test GM.	
