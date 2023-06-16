@@ -34,10 +34,11 @@ def main():
   print(args.out)
 
   N_SAMPLES_PER_CLASS = make_imb_data(args.num_max, args.num_class, args.imb_ratio_l)
+
   N_SAMPLES_PER_CLASS_T = torch.Tensor(N_SAMPLES_PER_CLASS)
 
 
-  train_labeled_set, train_unlabeled_set, test_set = get_WM_data(N_SAMPLES_PER_CLASS,args.unlabeled_size,args.test_size)
+  train_labeled_set, train_unlabeled_set, test_set = get_WM_data(args,N_SAMPLES_PER_CLASS)
 
   labeled_trainloader = data.DataLoader(train_labeled_set, batch_size=args.batch_size, shuffle=True, num_workers=2,
                                             drop_last=True)
@@ -66,8 +67,7 @@ def main():
   print('    Total params: %.2fM' % (sum(p.numel() for p in model.parameters())/1000000.0))
 
   train_criterion=SemiLoss()
-
-  nn.CrossEntropyLoss()
+  criterion = nn.CrossEntropyLoss()
   optimizer=optim.Adam(model.parameters(),lr=args.lr)
   ema_optimizer=WeightEMA(model,ema_model,lr=args.lr,alpha=args.ema_decay)
   start_epoch=0

@@ -91,14 +91,9 @@ class BasicDataset(Dataset):
       sample_X = self.transform(sample_X)
     return sample_X, sample_y, idx
 
-def test_split(labels,test_size):
-  labels = np.array(labels)
-  train_labeled_idxs = []
-
-  for i in range(9):
-      idxs = np.where(labels == i)[0]
-      train_labeled_idxs.extend(idxs[:test_size[i]])
-  return train_labeled_idxs
+def test_split(df,test_size):
+  test_idxs=list(df.sample(test_size).index)
+  return test_idxs
 
 def train_labeled_split(labels, n_labeled_per_class):
     labels = np.array(labels)
@@ -179,8 +174,8 @@ class TransformTwice:
 
 
 
-def get_WM_data(N_SAMPLES_PER_CLASS,unlabeled_size,test_size):
-  df=pd.read_pickle("LSWMD.pkl")
+def get_WM_data(args,N_SAMPLES_PER_CLASS):
+
   WM_mean = (0.4914, 0.4822, 0.4465) # equals np.mean(train_set.train_data, axis=(0,1,2))/255
   WM_std = (0.2471, 0.2435, 0.2616) # equals np.std(train_set.train_data, axis=(0,1,2))/255
   transform_train = transforms.Compose([
@@ -203,28 +198,64 @@ def get_WM_data(N_SAMPLES_PER_CLASS,unlabeled_size,test_size):
   transform_strong.transforms.insert(0, RandAugment(3, 4))
   transform_strong.transforms.append(CutoutDefault(16))
 
-  # 사이즈가 너무 커서
-  df=df.iloc[:2000]
+  # 사이즈가 너무 커서 미리 바꿔놨음
+  df= pd.read_pickle("LSWMD.pkl")
+  df1 = pd.read_pickle("LSWMD1.pkl")
+  '''
   for i in range(len(df)):
     if list(df.loc[i].failureType)==[]:
       df.loc[i,'failureType']=9
+  '''
+
   df['failureNum'] = df.failureType
-  mapping_type={'Center':0,'Donut':1,'Edge-Loc':2,'Edge-Ring':3,'Loc':4,'Random':5,'Scratch':6,'Near-full':7,'none':8}
-  df=df.replace({'failureNum':mapping_type})
+  df_withlabel = df[(df['failureType'] != 0)]  # 라벨링된 웨이퍼 : failureType = 0이 아닌 df
 
-  labels = df['failureNum'].to_numpy()
+  df_unlabel=df.drop(df_withlabel.index)
 
-  train_labeled_idxs=train_labeled_split(labels,N_SAMPLES_PER_CLASS)
-  train_unlabeled_idxs=train_unlabeled_split(labels,unlabeled_size)
-  test_list_per_class=[test_size for i in range(args.num_class)]
-  test_idxs=test_split(labels,test_list_per_class)
+  df_unlabel=df_unlabel.sample(args.unlabeled_size)
 
-  train_labeled_data=df.iloc[train_labeled_idxs].waferMap
-  train_labeled_data_label=df.iloc[train_labeled_idxs].failureNum
-  train_unlabeled_data=df.iloc[train_unlabeled_idxs].waferMap
-  train_unlabeled_data_label=df.iloc[train_unlabeled_idxs].failureNum
-  test_data=df.iloc[test_idxs].waferMap
-  test_data_label=df.iloc[test_idxs].failureNum
+  df_withpattern = df_withlabel[(df_withlabel['failureType'] != 'none')]  # 라벨링&패턴 웨이퍼: failureType = none 이 아닌 df
+
+  df_nonpattern = df_withlabel[(df_withlabel['failureType'] == 'none')]  # 라벨은 있고 패턴은 없는 웨이퍼:  failureType == none 인 df
+
+  df_nonpattern = df_nonpattern.sample(args.none_size)
+
+  df_label = pd.concat((df_withpattern, df_nonpattern))
+
+  df_label_index=df_label.index
+  df_unlabel_index=df_unlabel.index
+
+  df_label=df1.iloc[df_label_index]
+  df_unlabel=df1.iloc[df_unlabel_index]
+  df_label=df_label.reset_index()
+  df_unlabel = df_unlabel.reset_index()
+
+  mapping_type = {'none': 0, 'Edge-Ring': 1, 'Edge-Loc': 2, 'Center': 3, 'Loc': 4, 'Scratch': 5, 'Random': 6,
+                  'Donut': 7, 'Near-full': 8}
+  df_label=df_label.replace({'failureNum':mapping_type})
+  df_unlabel = df_unlabel.replace({'failureNum': mapping_type})
+
+  df_label_labels = df_label['failureNum'].to_numpy()
+  df_unlabel_labels=df_unlabel['failureNum'].to_numpy()
+
+  if args.all:
+    train_labeled_idxs = list(df_label.index)
+    train_unlabeled_idxs=list(df_unlabel.index)
+  else:
+    train_labeled_idxs = train_labeled_split(args.all, df_label_labels, N_SAMPLES_PER_CLASS)
+    train_unlabeled_idxs = train_unlabeled_split(args.all, df_unlabel_labels, args.unlabeled_size)
+
+  test_idxs = test_split(df_label, args.test_size)
+
+
+
+
+  train_labeled_data=df_label.iloc[train_labeled_idxs].waferMap
+  train_labeled_data_label=df_label.iloc[train_labeled_idxs].failureNum
+  train_unlabeled_data=df_unlabel.iloc[train_unlabeled_idxs].waferMap
+  train_unlabeled_data_label=df_unlabel.iloc[train_unlabeled_idxs].failureNum
+  test_data=df_label.iloc[test_idxs].waferMap
+  test_data_label=df_label.iloc[test_idxs].failureNum
 
   train_labeled_data_label_pre=label_preprocessing(train_labeled_data_label)
   train_unlabeled_data_label_pre=label_preprocessing(train_unlabeled_data_label)

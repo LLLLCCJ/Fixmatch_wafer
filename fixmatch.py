@@ -213,6 +213,7 @@ def validate(valloader, model, criterion, use_cuda, mode, num_class=10):
         inputs, targets = inputs.cuda(), targets.cuda(non_blocking=True)
       # compute output
       outputs, _ = model(inputs)
+
       loss = criterion(outputs, targets)
 
       # measure accuracy and record loss
@@ -224,11 +225,11 @@ def validate(valloader, model, criterion, use_cuda, mode, num_class=10):
       # classwise prediction
       pred_label = outputs.max(1)[1]
       pred_mask = (targets == pred_label).float()
+
       for i in range(num_class):
         class_mask = (targets == i).float()
-
-        classwise_correct[i] += (class_mask * pred_mask).sum()
-        classwise_num[i] += class_mask.sum()
+        classwise_correct[i] += (class_mask.to('cpu') * pred_mask.to('cpu')).sum()
+        classwise_num[i] += class_mask.to('cpu').sum()
 
       # measure elapsed time
       batch_time.update(time.time() - end)
@@ -266,6 +267,8 @@ def validate(valloader, model, criterion, use_cuda, mode, num_class=10):
 
   return (losses.avg, top1.avg, section_acc.numpy(), GM)
 
+
+
 class WeightEMA(object):
     def __init__(self, model, ema_model, lr=0.002, alpha=0.999):
         self.model = model
@@ -274,15 +277,20 @@ class WeightEMA(object):
         self.params = list(model.state_dict().values())
         self.ema_params = list(ema_model.state_dict().values())
         self.wd = 0.02 * lr
-
         for param, ema_param in zip(self.params, self.ema_params):
             param.data.copy_(ema_param.data)
-
     def step(self):
         one_minus_alpha = 1.0 - self.alpha
         for param, ema_param in zip(self.params, self.ema_params):
             # print(ema_param.mean())
-            ema_param.mul_(self.alpha)
-            ema_param.add_(param * one_minus_alpha)
-            # customized weight decay
-            param.mul_(1 - self.wd)
+            if ema_param.shape!=torch.Size([]):
+                ema_param.mul_(self.alpha)
+                ema_param.add_(param * one_minus_alpha)
+                # customized weight decay
+                param.mul_(1 - self.wd)
+def save_checkpoint(state, epoch, checkpoint='none', filename='checkpoint.pth.tar'):
+    filepath = os.path.join(checkpoint, filename)
+    torch.save(state, filepath)
+
+    if epoch % 100 == 0:
+        shutil.copyfile(filepath, os.path.join(checkpoint, 'model_' + str(epoch) + '.pth.tar'))

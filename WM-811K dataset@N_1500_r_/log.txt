@@ -1,1 +1,2 @@
 Train_Loss	Train Loss X	Train Loss U	Test Loss	Test Acc.	Test GM.	
+2.080226	2.080226	0.000000	3.708065	89.445438	nan	
