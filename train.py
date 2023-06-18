@@ -21,14 +21,20 @@ from get_data import *
 from fixmatch import *
 from args import parse_args
 
+import warnings
+warnings.filterwarnings('ignore')
 
 
 def main():
   global best_acc
   args = parse_args()
   state = {k: v for k, v in args._get_kwargs()}
-  args.out = args.dataset + '@N_' + str(args.num_max) + '_r_'
+  args.out = args.dataset + '@N_' + str(args.all) +"_"+ str(args.unlabeled_size)+ "_" + str(args.epochs)
   if not os.path.isdir(args.out):
+    mkdir_p(args.out)
+  else:
+    while os.path.isdir(args.out):
+      args.out=args.out+'_1'
     mkdir_p(args.out)
 
   print(args.out)

@@ -245,9 +245,9 @@ def get_WM_data(args,N_SAMPLES_PER_CLASS):
     train_labeled_idxs = train_labeled_split(args.all, df_label_labels, N_SAMPLES_PER_CLASS)
     train_unlabeled_idxs = train_unlabeled_split(args.all, df_unlabel_labels, args.unlabeled_size)
 
-  test_idxs = test_split(df_label, args.test_size)
-
-
+  t_size=int(args.test_size*len(train_labeled_idxs))
+  test_idxs = test_split(df_label, t_size)
+  train_labeled_idxs=list(set(train_labeled_idxs)-set(test_idxs))
 
 
   train_labeled_data=df_label.iloc[train_labeled_idxs].waferMap
@@ -269,5 +269,9 @@ def get_WM_data(args,N_SAMPLES_PER_CLASS):
   train_labeled_dataset=BasicDataset(train_labeled_data_pre,train_labeled_data_label_pre,transform=transform_train)
   train_unlabeled_dataset=BasicDataset(train_unlabeled_data_pre,train_unlabeled_data_label_pre,transform=TransformTwice(transform_train,transform_strong))
   test_dataset=BasicDataset(test_data_pre,test_data_label_pre,transform=transform_val)
+
+  print(len(train_labeled_dataset))
+  print(len(train_unlabeled_dataset))
+  print(len(test_dataset))
 
   return train_labeled_dataset,train_unlabeled_dataset,test_dataset
