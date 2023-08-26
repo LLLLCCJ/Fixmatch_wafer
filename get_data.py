@@ -159,8 +159,6 @@ def data_preprocessing(data):
 
   return img
 
-
-
 class TransformTwice:
     def __init__(self, transform, transform2):
         self.transform = transform
@@ -171,8 +169,6 @@ class TransformTwice:
         out2 = self.transform2(inp)
         out3 = self.transform2(inp)
         return out1, out2, out3
-
-
 
 def get_WM_data(args,N_SAMPLES_PER_CLASS):
 

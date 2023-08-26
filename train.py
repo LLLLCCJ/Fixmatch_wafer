@@ -24,7 +24,6 @@ from args import parse_args
 import warnings
 warnings.filterwarnings('ignore')
 
-
 def main():
   global best_acc
   args = parse_args()
@@ -46,6 +45,8 @@ def main():
 
   train_labeled_set, train_unlabeled_set, test_set = get_WM_data(args,N_SAMPLES_PER_CLASS)
 
+  print(11111111111111111111111111111111111111111111111111111111111111)
+  return
   labeled_trainloader = data.DataLoader(train_labeled_set, batch_size=args.batch_size, shuffle=True, num_workers=2,
                                             drop_last=True)
 

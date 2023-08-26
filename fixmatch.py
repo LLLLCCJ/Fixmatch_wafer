@@ -161,7 +161,6 @@ def make_imb_data(max_num, class_num, gamma):
     return list(class_num_list)
 
 
-
 import argparse
 import os
 import shutil

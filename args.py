@@ -30,6 +30,7 @@ def parse_args():
     parser.add_argument('--ema-decay', default=0.999, type=float)
     parser.add_argument('--epochs', default=200, type=int, metavar='N', help='number of total epochs to run')
     parser.add_argument('--gpu', default='0', type=str, help='id(s) for CUDA_VISIBLE_DEVICES')
+    parser.add_argument('--cf', default=0, type=int, help='confusion matrix')
     # Hyperparameters for FixMatch
     parser.add_argument('--tau', default=0.95, type=float, help='hyper-parameter for pseudo-label of FixMatch')
 
