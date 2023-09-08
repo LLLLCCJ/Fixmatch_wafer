@@ -155,6 +155,13 @@ def data_preprocessing(data):
   resized_images2 = rgb_sw(resized_images2)
   data = torch.Tensor(np.transpose(resized_images2, (0, 3, 1, 2)))
   for i in data:
+    print("i.shape")
+    print(i.shape)
+    print('type i')
+    print(type(i))
+    print('iiiiiiiiiiiiiiiiii')
+    print(i)
+    return
     img.append(TF.to_pil_image(i))
 
   return img

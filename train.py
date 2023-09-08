@@ -8,7 +8,7 @@ Original file is located at
 """
 
 import os
-os.chdir("C:/Users/lcj/desktop/Fix")
+#os.chdir("C:/Users/lcj/desktop/Fix")
 
 import argparse
 import numpy as np
